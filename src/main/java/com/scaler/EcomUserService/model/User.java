@@ -8,7 +8,7 @@ import lombok.Setter;
 import java.util.HashSet;
 import java.util.Set;
 
-@Entity
+@Entity(name = "ECOM_USER")
 @Setter
 @Getter
 public class User extends BaseModel{
