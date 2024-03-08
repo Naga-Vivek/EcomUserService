@@ -1,5 +1,6 @@
 package com.scaler.EcomUserService.service;
 
+import com.scaler.EcomUserService.dto.UserDto;
 import com.scaler.EcomUserService.model.Role;
 import com.scaler.EcomUserService.model.User;
 import com.scaler.EcomUserService.repository.RoleRepository;

@@ -1,5 +1,7 @@
 package com.scaler.EcomUserService.service;
 
+import com.scaler.EcomUserService.dto.UserDto;
+import com.scaler.EcomUserService.model.Session;
 import com.scaler.EcomUserService.model.SessionStatus;
 import com.scaler.EcomUserService.model.User;
 import com.scaler.EcomUserService.repository.SessionRepository;
@@ -12,10 +14,7 @@ import org.springframework.util.MultiValueMapAdapter;
 
 import javax.crypto.SecretKey;
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class AuthService {
