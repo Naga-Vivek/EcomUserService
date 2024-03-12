@@ -22,13 +22,6 @@ public class UserService {
         this.roleRepository = roleRepository;
     }
 
-    public UserDto createUser(SignUpRequestDto signUpRequestDto){
-        User user = new User();
-        user.setPassword(/*passwordEncoder.encode*/(signUpRequestDto.getPassword()));
-        user.setEmail(signUpRequestDto.getEmail());
-        User savedUser = userRepository.save(user);
-        return UserDto.from(savedUser);
-    }
 
     public UserDto getUserDetails(Long userId) {
         Optional<User> userOptional = userRepository.findById(userId);

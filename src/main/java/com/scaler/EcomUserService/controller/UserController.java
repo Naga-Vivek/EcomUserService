@@ -18,12 +18,6 @@ public class UserController {
         this.userService = userService;
     }
 
-    @PostMapping
-    public ResponseEntity<UserDto> createUser(@RequestBody SignUpRequestDto signUpRequestDto) {
-        UserDto userDto = userService.createUser(signUpRequestDto);
-
-        return new ResponseEntity<>(userDto, HttpStatus.OK);
-    }
 
     @GetMapping("/{id}")
     public ResponseEntity<UserDto> getUserDetails(@PathVariable("id") Long userId) {
