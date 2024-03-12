@@ -2,6 +2,7 @@ package com.scaler.EcomUserService.controller;
 
 
 import com.scaler.EcomUserService.dto.SetUserRolesRequestDto;
+import com.scaler.EcomUserService.dto.SignUpRequestDto;
 import com.scaler.EcomUserService.dto.UserDto;
 import com.scaler.EcomUserService.service.UserService;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,13 @@ public class UserController {
 
     public UserController(UserService userService) {
         this.userService = userService;
+    }
+
+    @PostMapping
+    public ResponseEntity<UserDto> createUser(@RequestBody SignUpRequestDto signUpRequestDto) {
+        UserDto userDto = userService.createUser(signUpRequestDto);
+
+        return new ResponseEntity<>(userDto, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
@@ -31,6 +39,5 @@ public class UserController {
 
         return new ResponseEntity<>(userDto, HttpStatus.OK);
     }
-
 
 }

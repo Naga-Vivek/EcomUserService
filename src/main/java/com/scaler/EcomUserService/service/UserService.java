@@ -1,5 +1,6 @@
 package com.scaler.EcomUserService.service;
 
+import com.scaler.EcomUserService.dto.SignUpRequestDto;
 import com.scaler.EcomUserService.dto.UserDto;
 import com.scaler.EcomUserService.model.Role;
 import com.scaler.EcomUserService.model.User;
@@ -19,6 +20,14 @@ public class UserService {
     public UserService(UserRepository userRepository, RoleRepository roleRepository) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+    }
+
+    public UserDto createUser(SignUpRequestDto signUpRequestDto){
+        User user = new User();
+        user.setPassword(/*passwordEncoder.encode*/(signUpRequestDto.getPassword()));
+        user.setEmail(signUpRequestDto.getEmail());
+        User savedUser = userRepository.save(user);
+        return UserDto.from(savedUser);
     }
 
     public UserDto getUserDetails(Long userId) {
