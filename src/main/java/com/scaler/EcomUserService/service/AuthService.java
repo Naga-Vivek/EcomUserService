@@ -2,31 +2,37 @@ package com.scaler.EcomUserService.service;
 
 import com.scaler.EcomUserService.dto.UserDto;
 import com.scaler.EcomUserService.exception.InvalidCredentialException;
+import com.scaler.EcomUserService.exception.InvalidTokenException;
 import com.scaler.EcomUserService.exception.UserNotFoundException;
 import com.scaler.EcomUserService.mapper.UserEntityDTOMapper;
 import com.scaler.EcomUserService.model.Session;
 import com.scaler.EcomUserService.model.SessionStatus;
+import com.scaler.EcomUserService.model.User;
 import com.scaler.EcomUserService.repository.SessionRepository;
 import com.scaler.EcomUserService.repository.UserRepository;
-import org.apache.commons.lang3.RandomStringUtils;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.MacAlgorithm;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMapAdapter;
-import com.scaler.EcomUserService.model.User;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import javax.crypto.SecretKey;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.*;
 
 @Service
 public class AuthService {
     private UserRepository userRepository;
     private SessionRepository sessionRepository;
     private BCryptPasswordEncoder bCryptPasswordEncoder;
+    private static MacAlgorithm algo = Jwts.SIG.HS256; // HS256 algo added for JWT
+    private static SecretKey key = algo.key().build(); // generating the secret key
 
     public AuthService(UserRepository userRepository, SessionRepository sessionRepository ,  BCryptPasswordEncoder bCryptPasswordEncoder) {
         this.userRepository = userRepository;
@@ -56,15 +62,45 @@ public class AuthService {
                 session.setSessionStatus(SessionStatus.ENDED);
             }
         }
+
         //Token generation
-        //apache's commons-lang3 dependency is added in pom.xml for the below method
-        String token = RandomStringUtils.randomAlphanumeric(30);
+        //For RandomString Token ,apache's commons-lang3 dependency is added in pom.xml for the below method
+        //String token = RandomStringUtils.randomAlphanumeric(30);
+
+        //Building a JWT Token
+        /*
+        MacAlgorithm algo = Jwts.SIG.HS256; // HS256 algo added for JWT
+        SecretKey key = algo.key().build(); // generating the secret key
+        */
+
+
+        //start adding the claims
+        Map<String, Object> jsonForJWT = new HashMap<>();
+
+
+        LocalDateTime localDateTime = LocalDateTime.now();
+        Date createdAt =  Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+        Date expiryAt = Date.from(localDateTime.plusDays(3).atZone(ZoneId.systemDefault()).toInstant());
+
+        jsonForJWT.put("userId", user.getId());
+        jsonForJWT.put("roles", user.getRoles());
+        jsonForJWT.put("createdAt", createdAt);
+        jsonForJWT.put("expiryAt", expiryAt);
+
+
+        String token = Jwts.builder()
+                .claims(jsonForJWT) // added the claims
+                .signWith(key) // added the algo and key
+                .compact(); //building the token
+
+
         //Session creation
         Session session = new Session();
         session.setSessionStatus(SessionStatus.ACTIVE);
         session.setToken(token);
         session.setUser(user);
-        session.setLoginAt(new Date());
+        session.setLoginAt(createdAt);
+        session.setExpiringAt(expiryAt);
         sessionRepository.save(session);
         // generating the response
         UserDto userDto = UserEntityDTOMapper.getUserDTOFromUserEntity(user);
@@ -79,18 +115,18 @@ public class AuthService {
     }
 
     public ResponseEntity<Void> logout(String token, Long userId) {
-        Optional<Session> sessionOptional = sessionRepository.findByTokenAndUser_Id(token, userId);
-
-        if (sessionOptional.isEmpty()) {
-            return null;
+        // validations -> token exists, token is not expired, user exists else throw an exception
+        Optional<User> userOptional = userRepository.findById(userId);
+        if(userOptional.isEmpty()){
+            throw new UserNotFoundException("User Not found with id : "+ userId);
         }
-
+        Optional<Session> sessionOptional = sessionRepository.findByTokenAndUser_Id(token, userId);
+        if (sessionOptional.isEmpty() || sessionOptional.get().getSessionStatus().equals(SessionStatus.ENDED)) {
+            throw new InvalidTokenException("token is invalid");
+        }
         Session session = sessionOptional.get();
-
         session.setSessionStatus(SessionStatus.ENDED);
-
         sessionRepository.save(session);
-
         return ResponseEntity.ok().build();
     }
 
@@ -104,15 +140,41 @@ public class AuthService {
         return UserDto.from(savedUser);
     }
 
-    public SessionStatus validate(String token, Long userId) {
-        Optional<Session> sessionOptional = sessionRepository.findByTokenAndUser_Id(token, userId);
 
-        if (sessionOptional.isEmpty()) {
-            return null;
+    public SessionStatus validate(String token, Long userId) {
+        //verifying from DB if session exists
+        Optional<Session> sessionOptional = sessionRepository.findByTokenAndUser_Id(token, userId);
+        if (sessionOptional.isEmpty() || sessionOptional.get().getSessionStatus().equals(SessionStatus.ENDED)) {
+            throw new InvalidTokenException("token is invalid");
         }
 
+        //TODO - check expiry from claims [Completed]
+        //Way 1 : Using Base64 Decoder
+/*        String[] parts = token.split("\\.");
+        // Decode the payload section.
+        String payload = new String(Base64.getDecoder().decode(parts[1]));
+        // Parse the JSON object.
+        JSONObject jsonObject = new JSONObject(payload);
+        long expiryTimeMillis = jsonObject.getLong("expiryAt");
+        if(System.currentTimeMillis() > expiryTimeMillis){
+            sessionOptional.get().setSessionStatus(SessionStatus.ENDED);
+            throw new InvalidTokenException("Token has expired");
+        }
+*/
+        //Way 2 : Jwts Parser -> parse the encoded JWT token to read the claims
+        Jws<Claims> jws = Jwts.parser().setSigningKey(key).build().parseClaimsJws(token);
+        Claims claims = jws.getPayload();
+        Long expiryTimeMillis = claims.get("expiryAt" , Long.class);
+        Long currentTimeMillis = System.currentTimeMillis();
+        if(expiryTimeMillis < currentTimeMillis){
+            Session expiredSession = sessionOptional.get();
+            expiredSession.setSessionStatus(SessionStatus.ENDED);
+            sessionRepository.save(expiredSession);
+            throw new InvalidTokenException("token has expired");
+        }
         return SessionStatus.ACTIVE;
     }
+
 
     public ResponseEntity<List<Session>> getAllSessions() {
         List<Session> sessions = sessionRepository.findAll();
