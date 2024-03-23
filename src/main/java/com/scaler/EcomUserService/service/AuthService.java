@@ -3,6 +3,7 @@ package com.scaler.EcomUserService.service;
 import com.scaler.EcomUserService.dto.UserDto;
 import com.scaler.EcomUserService.exception.InvalidCredentialException;
 import com.scaler.EcomUserService.exception.InvalidTokenException;
+import com.scaler.EcomUserService.exception.UserAlreadyExistsWithGivenEmailException;
 import com.scaler.EcomUserService.exception.UserNotFoundException;
 import com.scaler.EcomUserService.mapper.UserEntityDTOMapper;
 import com.scaler.EcomUserService.model.Session;
@@ -131,6 +132,10 @@ public class AuthService {
     }
 
     public UserDto signUp(String email, String password) {
+        Optional<User> userOptional = userRepository.findByEmail(email);
+        if(userOptional.isPresent()){
+            throw new UserAlreadyExistsWithGivenEmailException("User already exists with given email");
+        }
         User user = new User();
         user.setEmail(email);
         user.setPassword(bCryptPasswordEncoder.encode(password));
