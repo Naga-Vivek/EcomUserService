@@ -1,0 +1,85 @@
+Fundamental APIs for auth are already given by Spring Security OAuth2
+1. /login
+2. /logout
+3. /signup
+4. /validate -> to validate the token from Resource Service to Auth Service
+5. /register -> registering a new client [ basically the service which will rely on Auth Service for authentication ]
+
+// Central AuthService
+
+// user login -> customer login
+// central AuthService [ OAuth ] all the micro-services will be client to this central service
+
+// employees login
+// SSO -> Single Sign On -> single way to sign in everyone
+// LDAP based authentication
+// Active Directories  -> only the admin user of the device can access
+
+
+
+
+// -----------------------HW -> Explore how Github login from terminal works
+
+In IntelliJ IDEA, the terminal integration allows you to leverage two main approaches for GitHub login:
+
+1. Using Personal Access Token (PAT):
+
+
+Generate a PAT: Create a PAT in your GitHub settings.
+
+Configure IntelliJ Settings:
+
+Go to File -> Settings (or Preferences on macOS) -> Version Control -> GitHub.
+Select "Log In via Token" and enter your username and the generated PAT.
+Using Git Commands: Once configured, you can use Git commands within the IntelliJ terminal without needing to re-enter credentials for each command. The IDE automatically uses the stored PAT for authentication.
+
+2. Using OAuth Login:
+
+This method avoids storing credentials directly in the IDE but leverages OAuth for secure authorization. Here's the process:
+
+Configure IntelliJ Settings:
+
+Go to File -> Settings (or Preferences on macOS) -> Version Control -> GitHub.
+Select "Log In via GitHub".
+A browser window will open, prompting you to log in to your GitHub account.
+Authorization: Grant IntelliJ access to your GitHub account scopes (e.g., "repo" for basic Git operations).
+
+Subsequent Logins: After the initial setup, subsequent interactions might not require a full login flow.  The IDE might handle token refresh internally depending on its configuration.
+
+// ------------------- HW -> Explore how terminal talks to other services like Github....
+
+The IntelliJ IDEA terminal interacts with other services like GitHub primarily through Git commands. Here's a breakdown of the communication process:
+
+User Initiates Git Command: You execute a Git command within the IntelliJ terminal, such as git clone, git push, or git pull.
+
+IntelliJ Processes Command: The IntelliJ Git integration intercepts the command and interprets it.
+
+Authentication (if needed):
+
+PAT-Based Authentication:
+If you've configured a Personal Access Token (PAT) in the IDE settings, IntelliJ retrieves the stored username and PAT.
+OAuth-Based Authentication:
+If using OAuth, the IDE might handle token refresh internally or prompt you for re-authorization depending on the configuration and token expiry.
+Communication with GitHub:
+
+IntelliJ constructs a secure HTTPS request to the relevant GitHub API endpoint (e.g., for cloning a repository, it would use the GET /repos/{owner}/{repo} endpoint).
+Authentication Details: The request includes the necessary authentication information:
+PAT-Based: Username and PAT are included in the authorization header.
+OAuth-Based: An access token obtained through OAuth is used for authentication.
+Data Transfer:
+
+Outgoing Requests: When pushing or cloning repositories, the IDE transfers data (code, commits, etc.) to or from GitHub servers.
+Incoming Responses: GitHub responds with the requested data (e.g., repository content for cloning or status information for pushes).
+IntelliJ Processes Response:
+
+The IDE interprets the response from GitHub and displays relevant information in the terminal or updates the project view.
+In case of errors, the terminal displays error messages from GitHub.
+Additional Considerations:
+
+SSH Keys (Optional): If you've set up SSH key authentication for GitHub, the communication might happen directly over SSH instead of HTTPS, eliminating the need to include credentials in each request.
+IDE Configuration: IntelliJ settings for Git and specific services like GitHub can influence how authentication and communication occur.
+Security: Secure protocols (HTTPS, SSH) are used to encrypt communication between the IDE and GitHub.
+In essence:
+
+The IntelliJ terminal acts as a user interface for Git commands, while the Git integration in IntelliJ handles the communication with GitHub services securely using your chosen authentication method (PAT or OAuth).
+
