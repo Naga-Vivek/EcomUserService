@@ -18,7 +18,7 @@ Fundamental APIs for auth are already given by Spring Security OAuth2
 
 
 
-// -----------------------HW -> Explore how Github login from terminal works
+// -----------------------HW -> Explore how Github login from terminal works -----------------------------------------
 
 In IntelliJ IDEA, the terminal integration allows you to leverage two main approaches for GitHub login:
 
@@ -46,7 +46,12 @@ Authorization: Grant IntelliJ access to your GitHub account scopes (e.g., "repo"
 
 Subsequent Logins: After the initial setup, subsequent interactions might not require a full login flow.  The IDE might handle token refresh internally depending on its configuration.
 
-// ------------------- HW -> Explore how terminal talks to other services like Github....
+
+
+
+
+// ------------------- HW -> Explore how terminal talks to other services like Github....----------------------------------
+
 
 The IntelliJ IDEA terminal interacts with other services like GitHub primarily through Git commands. Here's a breakdown of the communication process:
 
@@ -83,3 +88,81 @@ In essence:
 
 The IntelliJ terminal acts as a user interface for Git commands, while the Git integration in IntelliJ handles the communication with GitHub services securely using your chosen authentication method (PAT or OAuth).
 
+
+
+
+
+
+
+-----------------------------------BACKUP vs REPLICATION -------------------------------------------------------
+Backup:
+
+Purpose: Creates a copy of data at a specific point in time.
+Focus: Primarily used for disaster recovery and restoring data in case of accidental deletion, corruption, or system failure.
+
+Replication:
+
+Purpose: Creates a continuous or near-continuous copy of data on another system.
+Focus: Primarily used for high availability and minimizing downtime in case of a primary system outage.
+
+The choice between backup and replication depends on your specific needs:
+
+For disaster recovery and occasional data restores: Backups are a good choice.
+For high availability and minimizing downtime: Replication is the preferred approach.
+For a balanced approach: A combination of backups and replication can be used for comprehensive data protection.
+
+
+
+---------------------------------------------LDAP & SSO ----------------------------------------------------------------
+
+
+LDAP and SSO are both related to user authentication and authorization, but they serve different purposes:
+
+LDAP (Lightweight Directory Access Protocol):
+=============================================
+Function: LDAP is an open-standard protocol for accessing and managing directory services. It acts like a phonebook for your network, storing information about users, groups, devices, and other resources.
+Focus: LDAP provides a centralized repository for user identities and attributes, allowing applications and services to verify user credentials and access rights.
+Benefits:
+Centralized management: Reduces redundancy and simplifies user administration across multiple systems.
+Scalability: Can handle large numbers of users and resources efficiently.
+Interoperability: Works with various applications and services that support LDAP.
+
+SSO (Single Sign-On):
+====================
+Function: SSO is a security system that allows users to log in once and access multiple applications or systems using the same credentials.
+Focus: SSO enhances user convenience by eliminating the need to enter credentials repeatedly. It also improves security by reducing the risk of password fatigue and stolen credentials.
+Benefits:
+Improved user experience: Users only need to remember one set of credentials.
+Enhanced security: Reduces password-related vulnerabilities.
+Streamlined administration: Easier to manage user access across multiple systems.
+Relationship Between LDAP and SSO:
+
+LDAP can be used as a foundation for SSO. An SSO system can leverage LDAP to authenticate users against the centralized directory service.
+While LDAP provides user identity information, SSO handles the authentication flow and grants access to various applications.
+Here's an analogy:
+------------------
+Think of LDAP as a library catalog. It stores information about books (users) and their categories (groups).
+SSO is like a library card. You use one card (credentials) to access different books (applications) in the library (network) based on your library card category (access rights).
+In summary:
+-----------
+LDAP is a protocol for managing user identities in a central location.
+SSO is a system that allows users to access multiple applications with a single login.
+LDAP can be used as a component of an SSO solution.
+
+
+
+
+
+----------------------------- BLUE/GREEN DEPLOYMENT --------------------------------------------
+Blue/green deployment is a strategy for deploying new versions of applications with minimal downtime and risk. It involves maintaining two identical production environments, figuratively named "blue" and "green." Here's how it works:
+
+Existing Environment (Blue): This environment runs the currently live version of your application, handling all traffic from users.
+
+New Environment (Green):  This environment is a complete replica of the blue environment, but with the new version of your application deployed.
+
+Deployment Process:
+
+The new application version is deployed to the green environment.
+The green environment undergoes thorough testing to ensure everything functions as expected.
+Once testing is complete, traffic is gradually switched from the blue environment to the green environment. This can be done through various methods like DNS record updates or load balancers.
+If the green environment performs well, the blue environment can be decommissioned or repurposed for future deployments. In case of any issues, switching traffic back to the blue environment (rollback) is straightforward.
