@@ -1,5 +1,6 @@
 package com.scaler.EcomUserService.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.scaler.EcomUserService.dto.*;
 import com.scaler.EcomUserService.model.Session;
 import com.scaler.EcomUserService.model.SessionStatus;
@@ -20,6 +21,10 @@ public class AuthController {
         this.authService = authService;
     }
 
+    @GetMapping
+    public ResponseEntity<String> welcome() {
+        return ResponseEntity.ok("Welcome to User Service");
+    }
     @PostMapping("/login")
     public ResponseEntity<UserDto> login(@RequestBody LoginRequestDto request) {
         return authService.login(request.getEmail(), request.getPassword());
@@ -31,7 +36,7 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<UserDto> signUp(@RequestBody SignUpRequestDto request) {
+    public ResponseEntity<UserDto> signUp(@RequestBody SignUpRequestDto request) throws JsonProcessingException {
         UserDto userDto = authService.signUp(request.getEmail(), request.getPassword());
         return new ResponseEntity<>(userDto, HttpStatus.OK);
     }

@@ -1,5 +1,9 @@
 package com.scaler.EcomUserService.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.scaler.EcomUserService.config.KafkaProducerConfig;
+import com.scaler.EcomUserService.dto.SendEmailDto;
 import com.scaler.EcomUserService.dto.UserDto;
 import com.scaler.EcomUserService.exception.InvalidCredentialException;
 import com.scaler.EcomUserService.exception.InvalidTokenException;
@@ -32,13 +36,17 @@ public class AuthService {
     private UserRepository userRepository;
     private SessionRepository sessionRepository;
     private BCryptPasswordEncoder bCryptPasswordEncoder;
+    private KafkaProducerConfig kafkaProducerConfig;
+    private ObjectMapper objectMapper;
     private static MacAlgorithm algo = Jwts.SIG.HS256; // HS256 algo added for JWT
     private static SecretKey key = algo.key().build(); // generating the secret key
 
-    public AuthService(UserRepository userRepository, SessionRepository sessionRepository ,  BCryptPasswordEncoder bCryptPasswordEncoder) {
+    public AuthService(UserRepository userRepository, SessionRepository sessionRepository ,  BCryptPasswordEncoder bCryptPasswordEncoder , KafkaProducerConfig kafkaProducerConfig , ObjectMapper objectMapper) {
         this.userRepository = userRepository;
         this.sessionRepository = sessionRepository;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+        this.kafkaProducerConfig = kafkaProducerConfig;
+        this.objectMapper = objectMapper;
     }
 
     public ResponseEntity<UserDto> login(String email, String password) {
@@ -131,7 +139,7 @@ public class AuthService {
         return ResponseEntity.ok().build();
     }
 
-    public UserDto signUp(String email, String password) {
+    public UserDto signUp(String email, String password) throws JsonProcessingException {
         Optional<User> userOptional = userRepository.findByEmail(email);
         if(userOptional.isPresent()){
             throw new UserAlreadyExistsWithGivenEmailException("User already exists with given email");
@@ -141,6 +149,16 @@ public class AuthService {
         user.setPassword(bCryptPasswordEncoder.encode(password));
 
         User savedUser = userRepository.save(user);
+
+        //If a user has signed up successfully , then push an event inside the queue with a particular topic
+        SendEmailDto sendEmailDto = new SendEmailDto();
+        sendEmailDto.setFrom("dev77.mailsender@gmail.com");
+        sendEmailDto.setTo(savedUser.getEmail());
+        sendEmailDto.setSubject("Signup Successful");
+        sendEmailDto.setBody("Welcome to our platform");
+
+        kafkaProducerConfig.sendMessage("signUp" , objectMapper.writeValueAsString(sendEmailDto));
+        System.out.println("Sign-Up event happened , Sending msg to Kafka Topic:");
 
         return UserDto.from(savedUser);
     }
