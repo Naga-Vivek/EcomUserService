@@ -38,15 +38,21 @@ public class AuthService {
     private BCryptPasswordEncoder bCryptPasswordEncoder;
     private KafkaProducerConfig kafkaProducerConfig;
     private ObjectMapper objectMapper;
-    private static MacAlgorithm algo = Jwts.SIG.HS256; // HS256 algo added for JWT
-    private static SecretKey key = algo.key().build(); // generating the secret key
+    private SecretKey key;
+    private MacAlgorithm algo = Jwts.SIG.HS256;
 
-    public AuthService(UserRepository userRepository, SessionRepository sessionRepository ,  BCryptPasswordEncoder bCryptPasswordEncoder , KafkaProducerConfig kafkaProducerConfig , ObjectMapper objectMapper) {
+
+    public AuthService(UserRepository userRepository, SessionRepository sessionRepository ,
+                       BCryptPasswordEncoder bCryptPasswordEncoder ,
+                       KafkaProducerConfig kafkaProducerConfig ,
+                       ObjectMapper objectMapper ,
+                       SecretKey key) {
         this.userRepository = userRepository;
         this.sessionRepository = sessionRepository;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.kafkaProducerConfig = kafkaProducerConfig;
         this.objectMapper = objectMapper;
+        this.key = key;
     }
 
     public ResponseEntity<UserDto> login(String email, String password) {
@@ -96,10 +102,9 @@ public class AuthService {
         jsonForJWT.put("createdAt", createdAt);
         jsonForJWT.put("expiryAt", expiryAt);
 
-
         String token = Jwts.builder()
                 .claims(jsonForJWT) // added the claims
-                .signWith(key) // added the algo and key
+                .signWith(key,algo) // added the key and algo
                 .compact(); //building the token
 
 
@@ -157,14 +162,15 @@ public class AuthService {
         sendEmailDto.setSubject("Signup Successful");
         sendEmailDto.setBody("Welcome to our platform");
 
-        kafkaProducerConfig.sendMessage("signUp" , objectMapper.writeValueAsString(sendEmailDto));
-        System.out.println("Sign-Up event happened , Sending msg to Kafka Topic:");
+        //kafkaProducerConfig.sendMessage("signUp" , objectMapper.writeValueAsString(sendEmailDto));
+        //System.out.println("Sign-Up event happened , Sending msg to Kafka Topic:");
 
         return UserDto.from(savedUser);
     }
 
 
     public SessionStatus validate(String token, Long userId) {
+        System.out.println("Initiating Token Validation..");
         //verifying from DB if session exists
         Optional<Session> sessionOptional = sessionRepository.findByTokenAndUser_Id(token, userId);
         if (sessionOptional.isEmpty() || sessionOptional.get().getSessionStatus().equals(SessionStatus.ENDED)) {
@@ -185,6 +191,8 @@ public class AuthService {
         }
 */
         //Way 2 : Jwts Parser -> parse the encoded JWT token to read the claims
+
+
         Jws<Claims> jws = Jwts.parser().setSigningKey(key).build().parseClaimsJws(token);
         Claims claims = jws.getPayload();
         Long expiryTimeMillis = claims.get("expiryAt" , Long.class);
