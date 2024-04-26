@@ -5,6 +5,7 @@ import com.scaler.EcomUserService.dto.*;
 import com.scaler.EcomUserService.model.Session;
 import com.scaler.EcomUserService.model.SessionStatus;
 import com.scaler.EcomUserService.model.User;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import com.scaler.EcomUserService.service.*;
@@ -31,7 +32,7 @@ public class AuthController {
     }
 
     @PostMapping("/logout/{id}")
-    public ResponseEntity<Void> logout(@PathVariable long id, @RequestHeader String token) {
+    public ResponseEntity<String> logout(@PathVariable long id, @RequestHeader(value = HttpHeaders.AUTHORIZATION,required = true) String token) {
         return authService.logout(token, id);
     }
 

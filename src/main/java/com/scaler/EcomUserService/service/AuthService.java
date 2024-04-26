@@ -128,7 +128,7 @@ public class AuthService {
         return response;
     }
 
-    public ResponseEntity<Void> logout(String token, Long userId) {
+    public ResponseEntity<String> logout(String token, Long userId) {
         // validations -> token exists, token is not expired, user exists else throw an exception
         Optional<User> userOptional = userRepository.findById(userId);
         if(userOptional.isEmpty()){
@@ -141,7 +141,7 @@ public class AuthService {
         Session session = sessionOptional.get();
         session.setSessionStatus(SessionStatus.ENDED);
         sessionRepository.save(session);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok("Logout Successful");
     }
 
     public UserDto signUp(String email, String password) throws JsonProcessingException {
